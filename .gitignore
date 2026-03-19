@@ -9,10 +9,11 @@ __pycache__/
 *.egg-info/
 *.egg
 
-# Env and secrets (optional: add config/feishu_config.py if you keep secrets local)
+# Env and secrets
 .env
 .env.local
 *.local
+config/feishu_config.py
 
 # Output and data
 output/
