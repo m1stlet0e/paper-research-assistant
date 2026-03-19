@@ -1,0 +1,79 @@
+# AI论文全自动预研助手配置文件
+
+# 数据源配置
+data_sources:
+  arxiv:
+    enabled: true
+    base_url: "https://export.arxiv.org/api/query"
+    max_results: 50
+    date_range: "last_3_years"
+  scholar:
+    enabled: false
+    api_key: ""
+    max_results: 50
+  cnki:
+    enabled: false
+    api_key: ""
+    max_results: 50
+
+# 检索配置
+search:
+  keywords: []
+  exclude_keywords: []
+  sort_by: "relevance"
+  sort_order: "descending"
+
+# 提取配置
+extraction:
+  extract_fields:
+    - title
+    - authors
+    - abstract
+    - published_date
+    - categories
+    - doi
+  extract_papers:
+    - pdf_url
+    - pdf_download_url
+  output_format: "excel"
+
+# 生成配置
+generation:
+  review_length: "medium"
+  include_citations: true
+  include_tables: true
+  include_trends: true
+
+# 推送配置
+notification:
+  enabled: true
+  platform: "feishu"
+  daily_check_time: "08:00"
+  check_interval_hours: 24
+
+# 记忆配置
+memory:
+  enabled: true
+  storage_type: "wal"
+  max_history_entries: 1000
+  deduplicate: true
+
+# Agent配置
+agents:
+  main_agent:
+    name: "PaperResearchMain"
+    model: "deepseek/deepseek-chat"
+    temperature: 0.7
+  sub_agents:
+    - name: "ArxivSearcher"
+      enabled: true
+    - name: "ScholarSearcher"
+      enabled: false
+    - name: "CNKISearcher"
+      enabled: false
+    - name: "PDFParser"
+      enabled: true
+    - name: "ReviewWriter"
+      enabled: true
+    - name: "Reporter"
+      enabled: true

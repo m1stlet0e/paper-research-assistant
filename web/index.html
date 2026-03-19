@@ -1,0 +1,2596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI论文预研助手 - OpenCrew多智能体协作系统">
+    <meta name="theme-color" content="#667eea">
+    <title>AI论文预研助手 - OpenCrew</title>
+    <style>
+        /* ========================================
+           1. CSS Variables & Reset
+           ======================================== */
+        :root {
+            --primary-color: #667eea;
+            --primary-light: #8b9ff5;
+            --secondary-color: #764ba2;
+            --bg-color: #0f0f1e;
+            --bg-light: #1a1a2e;
+            --card-bg: #1a1a2e;
+            --text-color: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --border-color: #2d2d44;
+            --success-color: #7ED321;
+            --warning-color: #F5A623;
+            --error-color: #E74C3C;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 20px rgba(0,0,0,0.2);
+            --shadow-lg: 0 8px 40px rgba(0,0,0,0.3);
+            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            --font-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* ========================================
+           2. Base Styles
+           ======================================== */
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ========================================
+           3. Animations
+           ======================================== */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes ripple {
+            to { transform: scale(4); opacity: 0; }
+        }
+
+        /* ========================================
+           4. Header & Navigation
+           ======================================== */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            padding: 1.5rem 2rem;
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            animation: fadeInLeft 0.6s ease-out;
+        }
+
+        .logo-icon {
+            font-size: 2.5rem;
+            animation: bounce 2s infinite;
+        }
+
+        .logo-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            letter-spacing: -0.02em;
+        }
+
+        .logo-text p {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.85);
+            font-weight: 400;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-tab {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all var(--transition-base);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-tab::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .nav-tab:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .nav-tab:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .nav-tab.active {
+            background: white;
+            color: var(--primary-color);
+            font-weight: 600;
+            box-shadow: var(--shadow-md);
+        }
+
+        .nav-tab:focus {
+            outline: 3px solid rgba(255,255,255,0.5);
+            outline-offset: 2px;
+        }
+
+        /* ========================================
+           5. Main Container & Sections
+           ======================================== */
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .section {
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .section.hidden {
+            display: none;
+        }
+
+        /* ========================================
+           6. Cards
+           ======================================== */
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+            transition: all var(--transition-base);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            opacity: 0;
+            transition: opacity var(--transition-base);
+        }
+
+        .card:hover {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-lg), 0 0 30px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            letter-spacing: -0.01em;
+        }
+
+        /* ========================================
+           7. Grid System
+           ======================================== */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ========================================
+           8. Forms & Inputs
+           ======================================== */
+        .input-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: var(--bg-color);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-color);
+            font-size: 0.95rem;
+            font-family: var(--font-sans);
+            transition: all var(--transition-base);
+        }
+
+        .input:hover {
+            border-color: var(--primary-light);
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+
+        .textarea {
+            min-height: 120px;
+            resize: vertical;
+            font-family: var(--font-sans);
+        }
+
+        select.input {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a0a0a0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            padding-right: 2.5rem;
+        }
+
+        /* ========================================
+           9. Buttons
+           ======================================== */
+        .btn {
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: var(--font-sans);
+            transition: all var(--transition-base);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+            min-height: 48px;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.4s, height 0.4s;
+        }
+
+        .btn:active::after {
+            width: 200px;
+            height: 200px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: var(--bg-color);
+            color: var(--text-color);
+            border: 2px solid var(--border-color);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            border-color: var(--primary-color);
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #6fb91d;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(126, 211, 33, 0.3);
+        }
+
+        .btn-danger {
+            background: var(--error-color);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn:focus {
+            outline: 3px solid rgba(102, 126, 234, 0.3);
+            outline-offset: 2px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        /* Loading Button State */
+        .btn-loading {
+            position: relative;
+            color: transparent !important;
+        }
+
+        .btn-loading::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* ========================================
+           10. Stats
+           ======================================== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            transition: all var(--transition-base);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity var(--transition-slow);
+        }
+
+        .stat-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-card:hover::after {
+            opacity: 1;
+        }
+
+        .stat-value {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-top: 0.5rem;
+            font-weight: 500;
+        }
+
+        /* ========================================
+           11. Loading States
+           ======================================== */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            gap: 1rem;
+        }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Skeleton Loading */
+        .skeleton {
+            background: linear-gradient(90deg, var(--bg-color) 0%, var(--border-color) 50%, var(--bg-color) 100%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite linear;
+            border-radius: 8px;
+        }
+
+        .skeleton-text {
+            height: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .skeleton-text.short {
+            width: 60%;
+        }
+
+        .skeleton-title {
+            height: 1.5rem;
+            width: 80%;
+            margin-bottom: 1rem;
+        }
+
+        /* ========================================
+           12. Toast Notifications
+           ======================================== */
+        .toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-width: 400px;
+            width: calc(100% - 2rem);
+        }
+
+        .toast {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            box-shadow: var(--shadow-lg);
+            border-left: 4px solid;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            animation: slideInRight 0.3s ease-out;
+            word-wrap: break-word;
+        }
+
+        .toast.toast-success {
+            border-left-color: var(--success-color);
+        }
+
+        .toast.toast-error {
+            border-left-color: var(--error-color);
+        }
+
+        .toast.toast-warning {
+            border-left-color: var(--warning-color);
+        }
+
+        .toast-icon {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .toast-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .toast-message {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            word-break: break-word;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.25rem;
+            font-size: 1.25rem;
+            line-height: 1;
+            transition: color var(--transition-fast);
+        }
+
+        .toast-close:hover {
+            color: var(--text-color);
+        }
+
+        /* ========================================
+           13. Paper List
+           ======================================== */
+        .results-container {
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .results-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .results-container::-webkit-scrollbar-track {
+            background: var(--bg-color);
+            border-radius: 4px;
+        }
+
+        .results-container::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+            transition: background var(--transition-fast);
+        }
+
+        .results-container::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-color);
+        }
+
+        .paper-item {
+            background: var(--bg-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary-color);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .paper-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 0;
+            background: linear-gradient(90deg, rgba(102, 126, 234, 0.1), transparent);
+            transition: width var(--transition-base);
+        }
+
+        .paper-item:hover {
+            background: rgba(102, 126, 234, 0.08);
+            transform: translateX(8px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .paper-item:hover::before {
+            width: 100%;
+        }
+
+        .paper-item:focus {
+            outline: 3px solid rgba(102, 126, 234, 0.3);
+            outline-offset: 2px;
+        }
+
+        .paper-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            color: var(--primary-light);
+            line-height: 1.4;
+        }
+
+        .paper-meta {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.75rem;
+        }
+
+        .paper-summary {
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* ========================================
+           14. Paper Detail Modal
+           ======================================== */
+        .paper-detail-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: fadeIn 0.3s ease-out;
+            backdrop-filter: blur(4px);
+            padding: 1rem;
+        }
+
+        .paper-detail-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 20px;
+            padding: 2.5rem;
+            max-width: 1100px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            animation: fadeInScale 0.3s ease-out;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: var(--text-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            transition: all var(--transition-base);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .modal-close:hover {
+            background: rgba(255,255,255,0.2);
+            transform: rotate(90deg);
+        }
+
+        .modal-close:focus {
+            outline: 3px solid rgba(102, 126, 234, 0.3);
+            outline-offset: 2px;
+        }
+
+        /* ========================================
+           15. Tags & Badges
+           ======================================== */
+        .tag {
+            font-size: 0.75rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            background: rgba(102, 126, 234, 0.2);
+            color: var(--primary-light);
+            display: inline-block;
+            font-weight: 500;
+        }
+
+        .badge {
+            font-size: 0.8rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 12px;
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+
+        /* ========================================
+           16. Hero Section
+           ======================================== */
+        .hero {
+            text-align: center;
+            padding: 4rem 0 3rem;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .hero h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .hero p {
+            color: var(--text-secondary);
+            font-size: 1.15rem;
+            max-width: 650px;
+            margin: 0 auto 2.5rem;
+            line-height: 1.7;
+        }
+
+        /* ========================================
+           17. Quick Actions
+           ======================================== */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .quick-action {
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quick-action::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            transform: scaleX(0);
+            transition: transform var(--transition-base);
+        }
+
+        .quick-action:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .quick-action:hover::before {
+            transform: scaleX(1);
+        }
+
+        .quick-action:focus {
+            outline: 3px solid rgba(102, 126, 234, 0.3);
+            outline-offset: 2px;
+        }
+
+        .quick-action-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .quick-action-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+        }
+
+        .quick-action-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* ========================================
+           18. Chat Interface
+           ======================================== */
+        .chat-container {
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 1.5rem;
+            background: var(--bg-color);
+            border-radius: 12px;
+            margin-bottom: 1.25rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .chat-message {
+            margin-bottom: 1.25rem;
+            padding: 1.25rem;
+            border-radius: 16px;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        .chat-message.user {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            margin-left: 3rem;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .chat-message.assistant {
+            background: rgba(255, 255, 255, 0.05);
+            margin-right: 3rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .chat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .chat-content {
+            line-height: 1.7;
+            word-wrap: break-word;
+        }
+
+        /* ========================================
+           19. Feishu Integration
+           ======================================== */
+        .feishu-status {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 1.5rem;
+            background: rgba(126, 211, 33, 0.1);
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(126, 211, 33, 0.3);
+        }
+
+        .feishu-status.connected {
+            color: var(--success-color);
+        }
+
+        .feishu-status-icon {
+            font-size: 1.5rem;
+        }
+
+        /* ========================================
+           20. Visualization
+           ======================================== */
+        .viz-iframe {
+            width: 100%;
+            height: 650px;
+            border: none;
+            border-radius: 12px;
+            background: var(--bg-color);
+        }
+
+        /* ========================================
+           21. Progress Bar
+           ======================================== */
+        .progress-container {
+            width: 100%;
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 2px;
+            transition: width var(--transition-base);
+        }
+
+        /* ========================================
+           22. Empty States
+           ======================================== */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+        }
+
+        .empty-state-desc {
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* ========================================
+           23. Accessibility
+           ======================================== */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            z-index: 10000;
+            text-decoration: none;
+            border-radius: 0 0 4px 0;
+            transition: top var(--transition-fast);
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        /* Focus visible for keyboard navigation */
+        :focus-visible {
+            outline: 3px solid rgba(102, 126, 234, 0.5);
+            outline-offset: 2px;
+        }
+
+        /* ========================================
+           24. Responsive Design
+           ======================================== */
+        @media (max-width: 1024px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .nav-tabs {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .container {
+                padding: 0 1.5rem;
+            }
+
+            .hero h2 {
+                font-size: 2rem;
+            }
+
+            .stat-value {
+                font-size: 2.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+            }
+
+            .logo {
+                justify-content: center;
+            }
+
+            .logo-text h1 {
+                font-size: 1.25rem;
+            }
+
+            .nav-tab {
+                padding: 0.6rem 1rem;
+                font-size: 0.85rem;
+            }
+
+            .container {
+                padding: 0 1rem;
+                margin: 1rem auto;
+            }
+
+            .card {
+                padding: 1.5rem;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero {
+                padding: 2rem 0;
+            }
+
+            .hero h2 {
+                font-size: 1.75rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+
+            .stat-card {
+                padding: 1.5rem;
+            }
+
+            .stat-value {
+                font-size: 2rem;
+            }
+
+            .quick-actions {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .chat-message.user {
+                margin-left: 1rem;
+            }
+
+            .chat-message.assistant {
+                margin-right: 1rem;
+            }
+
+            .paper-detail-content {
+                padding: 1.5rem;
+                max-height: 85vh;
+            }
+
+            .toast-container {
+                left: 1rem;
+                right: 1rem;
+                max-width: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .paper-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+
+        /* ========================================
+           25. Print Styles
+           ======================================== */
+        @media print {
+            .header,
+            .nav-tabs,
+            .btn,
+            .toast-container {
+                display: none;
+            }
+
+            body {
+                background: white;
+                color: black;
+            }
+
+            .card {
+                border: 1px solid #ddd;
+                box-shadow: none;
+            }
+        }
+
+        /* ========================================
+           26. Dark Mode Support (Optional)
+           ======================================== */
+        @media (prefers-color-scheme: light) {
+            /* Can add light mode styles here if needed */
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Skip Link for Accessibility -->
+    <a href="#main-content" class="skip-link">跳转到主要内容</a>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container" role="alert" aria-live="polite"></div>
+
+    <!-- Header -->
+    <header class="header" role="banner">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon" aria-hidden="true">🦞</div>
+                <div class="logo-text">
+                    <h1>AI论文预研助手</h1>
+                    <p>OpenCrew多智能体协作系统 · 真实数据</p>
+                </div>
+            </div>
+            <nav class="nav-tabs" role="navigation" aria-label="主导航">
+                <button class="nav-tab active" onclick="showSection('home')" aria-current="page" role="tab">
+                    首页
+                </button>
+                <button class="nav-tab" onclick="showSection('research')" role="tab">
+                    论文研究
+                </button>
+                <button class="nav-tab" onclick="showSection('visualization')" role="tab">
+                    可视化
+                </button>
+                <button class="nav-tab" onclick="showSection('qa')" role="tab">
+                    智能问答
+                </button>
+                <button class="nav-tab" onclick="showSection('feishu')" role="tab">
+                    飞书集成
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main id="main-content" class="container" role="main">
+        <!-- Home Section -->
+        <section id="home-section" class="section" aria-labelledby="home-heading">
+            <div class="hero">
+                <h2 id="home-heading">🚀 一站式AI论文研究平台</h2>
+                <p>自动检索arXiv论文、智能分析、知识图谱、对比矩阵、智能问答，多智能体协作</p>
+            </div>
+
+
+            <div class="quick-actions" role="list" aria-label="快捷操作">
+                <button class="quick-action" onclick="showSection('research')" role="listitem" tabindex="0">
+                    <span class="quick-action-icon" aria-hidden="true">📚</span>
+                    <div class="quick-action-title">论文研究</div>
+                    <div class="quick-action-desc">自动检索arXiv综述生成</div>
+                </button>
+                <button class="quick-action" onclick="showSection('visualization')" role="listitem" tabindex="0">
+                    <span class="quick-action-icon" aria-hidden="true">📊</span>
+                    <div class="quick-action-title">可视化</div>
+                    <div class="quick-action-desc">知识图谱对比矩阵</div>
+                </button>
+                <button class="quick-action" onclick="showSection('qa')" role="listitem" tabindex="0">
+                    <span class="quick-action-icon" aria-hidden="true">💬</span>
+                    <div class="quick-action-title">智能问答</div>
+                    <div class="quick-action-desc">论文内容智能问答</div>
+                </button>
+                <button class="quick-action" onclick="showSection('feishu')" role="listitem" tabindex="0">
+                    <span class="quick-action-icon" aria-hidden="true">📄</span>
+                    <div class="quick-action-title">飞书集成</div>
+                    <div class="quick-action-desc">多维表格知识库</div>
+                </button>
+            </div>
+        </section>
+
+        <!-- Research Section -->
+        <section id="research-section" class="section hidden" aria-labelledby="research-heading">
+            <div class="card">
+                <div class="card-header">
+                    <h2 id="research-heading" class="card-title">📚 论文研究</h2>
+                </div>
+
+                <form id="research-form" onsubmit="startResearch(event)">
+                    <div class="input-group">
+                        <label for="research-topic">研究课题</label>
+                        <input type="text" 
+                               class="input" 
+                               id="research-topic" 
+                               placeholder="例如：AI Agent, Transformer, LLM"
+                               required
+                               aria-describedby="topic-help">
+                        <small id="topic-help" class="sr-only">输入您想研究的AI相关课题</small>
+                    </div>
+
+                    <div class="grid-2" style="margin-top: 1rem;">
+                        <div class="input-group">
+                            <label for="max-papers">最大论文数</label>
+                            <input type="number" 
+                                   class="input" 
+                                   id="max-papers" 
+                                   value="20" 
+                                   min="10" 
+                                   max="100"
+                                   aria-describedby="max-papers-help">
+                            <small id="max-papers-help" class="sr-only">设置检索论文的最大数量，范围10-100</small>
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary" id="research-btn">
+                            🚀 开始研究
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📊 研究结果</h3>
+                    <span class="badge" id="papers-count" aria-live="polite">0篇</span>
+                </div>
+                <div id="research-results" class="results-container" role="list" aria-label="论文列表">
+                    <div class="empty-state">
+                        <div class="empty-state-icon" aria-hidden="true">📭</div>
+                        <div class="empty-state-title">开始您的研究</div>
+                        <div class="empty-state-desc">输入研究课题，点击"开始研究"从arXiv检索真实论文</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Visualization Section -->
+        <section id="visualization-section" class="section hidden" aria-labelledby="viz-heading">
+            <div class="card">
+                <div class="card-header">
+                    <h2 id="viz-heading" class="card-title">📊 可视化工具</h2>
+                </div>
+
+                <div class="grid">
+                    <button class="quick-action" onclick="openVisualization('knowledge_graph')" aria-label="打开知识图谱">
+                        <span class="quick-action-icon" aria-hidden="true">🕸️</span>
+                        <div class="quick-action-title">知识图谱</div>
+                        <div class="quick-action-desc">论文关系网络可视化</div>
+                    </button>
+                    <button class="quick-action" onclick="openVisualization('comparison_matrix')" aria-label="打开对比矩阵">
+                        <span class="quick-action-icon" aria-hidden="true">📊</span>
+                        <div class="quick-action-title">对比矩阵</div>
+                        <div class="quick-action-desc">多维度论文对比</div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="card" id="viz-container" style="display: none;">
+                <div class="card-header">
+                    <h3 class="card-title" id="viz-title">可视化</h3>
+                </div>
+                <iframe id="viz-iframe" class="viz-iframe" title="可视化内容"></iframe>
+            </div>
+        </section>
+
+        <!-- QA Section -->
+        <section id="qa-section" class="section hidden" aria-labelledby="qa-heading">
+            <div class="card">
+                <div class="card-header">
+                    <h2 id="qa-heading" class="card-title">💬 智能问答</h2>
+                </div>
+
+                <div class="chat-container" id="chat-container" role="log" aria-live="polite" aria-label="问答历史">
+                    <div class="chat-message assistant">
+                        <div class="chat-label">🤖 AI助手</div>
+                        <div class="chat-content">
+                            您好！我是AI论文预研助手的智能问答系统。请先运行论文研究，然后我可以回答关于论文的问题。<br><br>
+                            您可以问我：<br>
+                            • 主要的研究方法有哪些？<br>
+                            • 哪些论文使用了Transformer？<br>
+                            • 总结一下研究现状<br>
+                            • 数据集使用情况如何？
+                        </div>
+                    </div>
+                </div>
+
+                <form onsubmit="askQuestion(event)">
+                    <div class="input-group">
+                        <label for="qa-input" class="sr-only">您的问题</label>
+                        <input type="text" 
+                               class="input" 
+                               id="qa-input" 
+                               placeholder="输入您的问题..."
+                               aria-label="输入您的问题">
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary">发送</button>
+                    </div>
+                </form>
+
+                <div style="margin-top: 1.5rem;">
+                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.75rem;">
+                        💡 快捷问题：
+                    </p>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button class="btn btn-secondary" onclick="quickQuestion('主要的研究方法有哪些？')">
+                            研究方法
+                        </button>
+                        <button class="btn btn-secondary" onclick="quickQuestion('总结一下研究现状')">
+                            研究总结
+                        </button>
+                        <button class="btn btn-secondary" onclick="quickQuestion('数据集使用情况')">
+                            数据集
+                        </button>
+                        <button class="btn btn-secondary" onclick="quickQuestion('论文创新点分析')">
+                            创新点
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Feishu Section -->
+        <section id="feishu-section" class="section hidden" aria-labelledby="feishu-heading">
+            <div class="card">
+                <div class="card-header">
+                    <h2 id="feishu-heading" class="card-title">📄 飞书集成</h2>
+                </div>
+
+                <div class="feishu-status connected" role="status">
+                    <span class="feishu-status-icon" aria-hidden="true">✅</span>
+                    <span>飞书已连接 | 应用ID: cli_a9f6f82a4ff89bd9</span>
+                </div>
+
+                <div class="input-group">
+                    <label for="feishu-bitable-name">多维表格名称</label>
+                    <input type="text" 
+                           class="input" 
+                           id="feishu-bitable-name" 
+                           placeholder="AI论文研究">
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="createFeishuBitable()">
+                        📊 创建多维表格
+                    </button>
+                    <button class="btn btn-secondary" onclick="sendFeishuCard()">
+                        📩 发送消息卡片
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📋 飞书文档历史</h3>
+                </div>
+                <div id="feishu-history" role="list" aria-label="飞书文档历史">
+                    <div class="empty-state">
+                        <div class="empty-state-icon" aria-hidden="true">📭</div>
+                        <div class="empty-state-title">暂无历史记录</div>
+                        <div class="empty-state-desc">完成论文研究后，可以将结果同步到飞书</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // ========================================
+        // Configuration & State
+        // ========================================
+        const API_BASE = window.location.origin;
+        
+        let currentPapers = [];
+        let currentTopic = '';
+        let qaCount = 0;
+        
+        // Paper data cache
+        if (!window.papersData) window.papersData = {};
+
+        // ========================================
+        // Toast Notification System
+        // ========================================
+        class ToastManager {
+            constructor() {
+                this.container = document.getElementById('toast-container');
+            }
+
+            show(message, type = 'success', duration = 5000) {
+                const toast = document.createElement('div');
+                toast.className = `toast toast-${type}`;
+                toast.setAttribute('role', 'alert');
+                toast.setAttribute('aria-live', 'assertive');
+                
+                const icons = {
+                    success: '✅',
+                    error: '❌',
+                    warning: '⚠️'
+                };
+
+                toast.innerHTML = `
+                    <span class="toast-icon" aria-hidden="true">${icons[type]}</span>
+                    <div class="toast-content">
+                        <div class="toast-message">${message}</div>
+                    </div>
+                    <button class="toast-close" aria-label="关闭通知">&times;</button>
+                `;
+
+                const closeBtn = toast.querySelector('.toast-close');
+                closeBtn.addEventListener('click', () => this.remove(toast));
+
+                this.container.appendChild(toast);
+
+                if (duration > 0) {
+                    setTimeout(() => this.remove(toast), duration);
+                }
+
+                return toast;
+            }
+
+            remove(toast) {
+                toast.style.animation = 'fadeIn 0.3s ease-out reverse';
+                setTimeout(() => toast.remove(), 300);
+            }
+
+            success(message, duration) {
+                return this.show(message, 'success', duration);
+            }
+
+            error(message, duration) {
+                return this.show(message, 'error', duration);
+            }
+
+            warning(message, duration) {
+                return this.show(message, 'warning', duration);
+            }
+
+        }
+
+        const toast = new ToastManager();
+
+        // ========================================
+        // Loading State Manager
+        // ========================================
+        class LoadingManager {
+            constructor() {
+                this.activeLoads = new Set();
+            }
+
+            start(element, text = '加载中...') {
+                if (element.disabled) return;
+                
+                element.disabled = true;
+                element.dataset.originalText = element.innerHTML;
+                element.innerHTML = `<div class="loading-spinner" style="width: 20px; height: 20px;"></div>`;
+                element.classList.add('btn-loading');
+                this.activeLoads.add(element);
+            }
+
+            stop(element) {
+                if (!this.activeLoads.has(element)) return;
+                
+                element.disabled = false;
+                element.innerHTML = element.dataset.originalText;
+                element.classList.remove('btn-loading');
+                this.activeLoads.delete(element);
+            }
+
+            stopAll() {
+                this.activeLoads.forEach(el => this.stop(el));
+            }
+        }
+
+        const loading = new LoadingManager();
+
+        // ========================================
+        // Tab Navigation
+        // ========================================
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+            
+            // Show target section
+            const targetSection = document.getElementById(sectionName + '-section');
+            if (targetSection) {
+                targetSection.classList.remove('hidden');
+                targetSection.focus();
+            }
+            
+            // Update nav tabs
+            document.querySelectorAll('.nav-tab').forEach(t => {
+                t.classList.remove('active');
+                t.removeAttribute('aria-current');
+            });
+            
+            // Find and activate the clicked tab
+            const activeTab = event.target;
+            if (activeTab && activeTab.classList.contains('nav-tab')) {
+                activeTab.classList.add('active');
+                activeTab.setAttribute('aria-current', 'page');
+            }
+        }
+
+        // ========================================
+        // Research Functions
+        // ========================================
+        async function startResearch(e) {
+            if (e) e.preventDefault();
+            
+            const topic = document.getElementById('research-topic').value.trim();
+            if (!topic) {
+                toast.warning('请输入研究课题');
+                document.getElementById('research-topic').focus();
+                return;
+            }
+            
+            const maxPapers = document.getElementById('max-papers').value;
+            const enableFeishu = false;
+            const researchBtn = document.getElementById('research-btn');
+            
+            // Show loading state
+            loading.start(researchBtn, '研究进行中...');
+            
+            document.getElementById('research-results').innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <div class="loading-text">正在从arXiv检索论文...</div>
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+            `;
+            
+            // Animate progress bar
+            const progressBar = document.querySelector('.progress-bar');
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress = Math.min(progress + Math.random() * 15, 90);
+                if (progressBar) progressBar.style.width = progress + '%';
+            }, 500);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/research`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        topic: topic,
+                        max_papers: parseInt(maxPapers),
+                        enable_feishu: enableFeishu
+                    })
+                });
+                
+                const result = await response.json();
+                
+                clearInterval(progressInterval);
+                if (progressBar) progressBar.style.width = '100%';
+                
+                if (result.status === 'completed') {
+                    currentPapers = result.papers || [];
+                    currentTopic = topic;
+                    
+                    displayResearchResults(result);
+                    updateStats(result);
+                    
+                    toast.success(`研究完成！找到 ${result.papers_count || currentPapers.length} 篇论文`);
+                } else {
+                    document.getElementById('research-results').innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon" aria-hidden="true">❌</div>
+                            <div class="empty-state-title">研究失败</div>
+                            <div class="empty-state-desc">${result.error || '未知错误'}</div>
+                        </div>
+                    `;
+                    toast.error(result.error || '研究失败，请重试');
+                }
+            } catch (error) {
+                console.error('Research error:', error);
+                clearInterval(progressInterval);
+                
+                document.getElementById('research-results').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon" aria-hidden="true">🔌</div>
+                        <div class="empty-state-title">连接失败</div>
+                        <div class="empty-state-desc">请确保API服务器正在运行</div>
+                    </div>
+                `;
+                toast.error('无法连接到服务器，请检查API是否运行');
+            } finally {
+                loading.stop(researchBtn);
+            }
+        }
+
+        // Display Research Results
+        function displayResearchResults(result) {
+            const papers = result.papers || [];
+            
+            let html = `
+                <div class="stat-card" style="margin-bottom: 1.5rem;">
+                    <h4 style="margin-bottom: 1rem; font-size: 1.1rem;">✅ 研究完成</h4>
+                    <p style="margin-bottom: 0.5rem;"><strong>课题:</strong> ${result.topic}</p>
+                    <p style="margin-bottom: 0.5rem;"><strong>论文数:</strong> ${result.papers_count || papers.length}篇</p>
+                    <p><strong>耗时:</strong> ${result.duration_seconds?.toFixed(1) || 0}秒</p>
+                </div>
+            `;
+            
+            papers.forEach((paper, i) => {
+                const authors = paper.authors?.slice(0, 3).map(a => a.name || a).join(', ') || 'N/A';
+                const year = paper.published?.substring(0, 4) || 'N/A';
+                
+                // Store paper data
+                window.papersData[i] = paper;
+                
+                html += `
+                    <article class="paper-item" 
+                             onclick="showPaperDetail(${i})" 
+                             role="listitem"
+                             tabindex="0"
+                             onkeypress="if(event.key==='Enter')showPaperDetail(${i})"
+                             aria-label="${paper.title || '未知标题'}">
+                        <h3 class="paper-title">${i + 1}. ${paper.title || '未知标题'}</h3>
+                        <div class="paper-meta">
+                            <span aria-label="发表年份">📅 ${year}</span>
+                            <span aria-label="作者">👥 ${authors}</span>
+                            ${paper.arxiv_id ? `
+                                <a href="https://arxiv.org/abs/${paper.arxiv_id}" 
+                                   target="_blank" 
+                                   rel="noopener noreferrer"
+                                   style="color: var(--primary-light);"
+                                   onclick="event.stopPropagation()"
+                                   aria-label="查看arXiv原文">
+                                    🔗 arXiv
+                                </a>
+                            ` : ''}
+                        </div>
+                        <p class="paper-summary">${paper.summary?.substring(0, 200) || '暂无摘要'}...</p>
+                    </article>
+                `;
+            });
+            
+            document.getElementById('research-results').innerHTML = html;
+            document.getElementById('papers-count').textContent = `${papers.length}篇`;
+        }
+
+        // Show Paper Detail Modal
+        function showPaperDetail(index) {
+            const paper = window.papersData[index];
+            if (!paper) return;
+            
+            // Create modal
+            const modal = document.createElement('div');
+            modal.className = 'paper-detail-modal';
+            modal.id = 'paper-detail-modal';
+            modal.setAttribute('role', 'dialog');
+            modal.setAttribute('aria-modal', 'true');
+            modal.setAttribute('aria-labelledby', 'modal-title');
+            
+            const content = document.createElement('div');
+            content.className = 'paper-detail-content';
+            content.style.cssText = 'max-width: 1200px; width: 90%;';
+            
+            const authors = paper.authors?.map(a => a.name || a).join(', ') || '未知作者';
+            const year = paper.published?.substring(0, 4) || 'N/A';
+            const summary = paper.summary || paper.abstract || '暂无摘要';
+            
+            let pdfUrl = paper.pdf_url || (paper.arxiv_id ? `https://arxiv.org/pdf/${paper.arxiv_id}.pdf` : null);
+            let htmlUrl = paper.arxiv_id ? `https://arxiv.org/html/${paper.arxiv_id}` : null;
+            let arxivUrl = paper.arxiv_id ? `https://arxiv.org/abs/${paper.arxiv_id}` : (pdfUrl ? pdfUrl.replace('/pdf/', '/abs/').replace('.pdf', '') : null);
+            
+            if (!paper.arxiv_id && pdfUrl) {
+                const match = pdfUrl.match(/(\d{4}\.\d{4,5})/);
+                if (match) {
+                    const arxivId = match[1];
+                    htmlUrl = `https://arxiv.org/html/${arxivId}`;
+                    arxivUrl = `https://arxiv.org/abs/${arxivId}`;
+                }
+            }
+            
+            content.innerHTML = `
+                <button class="modal-close" aria-label="关闭">&times;</button>
+                
+                <h2 id="modal-title" style="font-size: 1.5rem; margin-bottom: 1.5rem; color: var(--primary-light); line-height: 1.4; padding-right: 3rem;">
+                    ${paper.title || '未知标题'}
+                </h2>
+                
+                <div style="display: grid; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.25rem;">📅 发表时间</div>
+                            <div style="font-size: 1.1rem;">${year}</div>
+                        </div>
+                        <div style="flex: 1; min-width: 200px;">
+                            <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.25rem;">📄 来源</div>
+                            <div style="font-size: 1.1rem;">${paper.source || 'arXiv'}</div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.25rem;">👥 作者</div>
+                        <div style="font-size: 1rem; line-height: 1.5;">${authors}</div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.5rem;">📝 摘要</div>
+                    <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 8px; line-height: 1.6; font-size: 0.95rem;">
+                        ${summary}
+                    </div>
+                </div>
+                
+                ${pdfUrl ? `
+                <div style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                    <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">📚 查看论文全文</div>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
+                        <a href="${pdfUrl}" 
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="btn btn-primary"
+                           style="text-decoration: none;">
+                            📄 PDF全文
+                        </a>
+                        ${htmlUrl ? `
+                        <a href="${htmlUrl}" 
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="btn btn-secondary"
+                           style="text-decoration: none;">
+                            🌐 HTML全文
+                        </a>
+                        ` : ''}
+                        ${arxivUrl ? `
+                        <a href="${arxivUrl}" 
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="btn btn-secondary"
+                           style="text-decoration: none;">
+                            📖 arXiv主页
+                        </a>
+                        ` : ''}
+                    </div>
+                    
+                    <div style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 1rem;">
+                        <iframe src="${pdfUrl}" 
+                                style="width: 100%; height: 600px; border: none; border-radius: 8px;"
+                                title="论文PDF预览"
+                                loading="lazy">
+                        </iframe>
+                        <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.5rem; text-align: center;">
+                            💡 如果PDF无法加载，请点击"PDF全文"按钮在新窗口查看
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+            `;
+            
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+            
+            // Focus trap
+            const closeBtn = content.querySelector('.modal-close');
+            closeBtn.focus();
+            
+            // Close handlers
+            const closeModal = () => modal.remove();
+            
+            closeBtn.onclick = closeModal;
+            modal.onclick = (e) => {
+                if (e.target === modal) closeModal();
+            };
+            
+            document.addEventListener('keydown', function escHandler(e) {
+                if (e.key === 'Escape') {
+                    closeModal();
+                    document.removeEventListener('keydown', escHandler);
+                }
+            });
+        }
+
+        // Update Stats
+        function updateStats(result) {
+            const animateValue = (element, target) => {
+                if (!element) return;
+                const duration = 1000;
+                const start = parseInt(element.textContent) || 0;
+                const startTime = performance.now();
+                
+                const animate = (currentTime) => {
+                    const elapsed = currentTime - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const current = Math.floor(start + (target - start) * progress);
+                    element.textContent = current;
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(animate);
+                    }
+                };
+                
+                requestAnimationFrame(animate);
+            };
+            
+            animateValue(document.getElementById('stat-papers'), result.papers_count || 0);
+            animateValue(document.getElementById('stat-visualizations'), Object.keys(result.visualizations || {}).length);
+            
+            if (result.analysis?.citation_network?.statistics?.categories) {
+                animateValue(document.getElementById('stat-methods'), result.analysis.citation_network.statistics.categories);
+            }
+        }
+
+        // Load Existing Results
+        async function loadExistingResults() {
+            try {
+                const response = await fetch(`${API_BASE}/api/papers`);
+                const data = await response.json();
+                
+                if (data.papers && data.papers.length > 0) {
+                    currentPapers = data.papers;
+                    displayResearchResults({papers: data.papers, papers_count: data.count});
+                    toast.success(`已加载 ${data.count} 篇论文`);
+                } else {
+                    toast.warning('暂无已有结果，请先运行研究');
+                }
+            } catch (error) {
+                console.error('Load error:', error);
+                toast.error('加载失败，请确保API服务器正在运行');
+            }
+        }
+
+        // ========================================
+        // Visualization Functions
+        // ========================================
+        async function openVisualization(type) {
+            try {
+                const response = await fetch(`${API_BASE}/api/visualizations`);
+                const data = await response.json();
+                
+                const viz = data.visualizations.find(v => v.name === type);
+                
+                if (viz) {
+                    document.getElementById('viz-container').style.display = 'block';
+                    document.getElementById('viz-title').textContent = 
+                        type === 'knowledge_graph' ? '🕸️ 知识图谱' : '📊 对比矩阵';
+                    document.getElementById('viz-iframe').src = viz.url;
+                } else {
+                    toast.warning('请先运行论文研究以生成可视化');
+                }
+            } catch (error) {
+                console.error('Visualization error:', error);
+                toast.error('无法加载可视化，请确保API服务器正在运行');
+            }
+        }
+
+        // ========================================
+        // Q&A Functions
+        // ========================================
+        async function askQuestion(e) {
+            if (e) e.preventDefault();
+            
+            const input = document.getElementById('qa-input');
+            const question = input.value.trim();
+            const useEnhanced = document.getElementById('qa-enhanced-toggle')?.checked ?? true;
+            
+            if (!question) {
+                toast.warning('请输入问题');
+                input.focus();
+                return;
+            }
+            
+            if (!currentPapers.length) {
+                toast.warning('请先运行论文研究以初始化问答系统');
+                return;
+            }
+            
+            const chatContainer = document.getElementById('chat-container');
+            
+            // Add user message
+            chatContainer.innerHTML += `
+                <div class="chat-message user">
+                    <div class="chat-label">👤 用户</div>
+                    <div class="chat-content">${escapeHtml(question)}</div>
+                </div>
+            `;
+            
+            input.value = '';
+            
+            // Add loading message
+            const loadingId = 'loading-' + Date.now();
+            chatContainer.innerHTML += `
+                <div class="chat-message assistant" id="${loadingId}">
+                    <div class="chat-label">🤖 AI助手 ${useEnhanced ? '(增强版)' : ''}</div>
+                    <div class="chat-content">
+                        <div class="loading" style="padding: 0;">
+                            <div class="loading-spinner" style="width: 24px; height: 24px;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/qa`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        question: question,
+                        enhanced: useEnhanced
+                    })
+                });
+                
+                const result = await response.json();
+                
+                // Remove loading message
+                document.getElementById(loadingId)?.remove();
+                
+                // Build answer with citations
+                let answerHtml = formatMarkdown(result.answer || '无法回答该问题');
+                
+                // Add citations if available
+                if (result.citations && result.citations.length > 0) {
+                    answerHtml += '<div class="citations" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">';
+                    answerHtml += '<div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">📚 引用来源:</div>';
+                    result.citations.slice(0, 5).forEach((citation, i) => {
+                        answerHtml += `<div style="font-size: 0.85rem; margin: 0.25rem 0;">`;
+                        answerHtml += `<a href="${citation.url}" target="_blank" style="color: var(--primary-color);">[${i+1}] ${citation.title}</a>`;
+                        if (citation.year) answerHtml += ` (${citation.year})`;
+                        answerHtml += `</div>`;
+                    });
+                    answerHtml += '</div>';
+                }
+                
+                // Add question type badge
+                if (result.question_type) {
+                    const typeLabels = {
+                        'method_overview': '方法概览',
+                        'method_detail': '方法详情',
+                        'method_comparison': '方法对比',
+                        'dataset_overview': '数据集概览',
+                        'dataset_usage': '数据集使用',
+                        'trend_temporal': '时间趋势',
+                        'trend_hotspot': '研究热点',
+                        'paper_find': '论文查找',
+                        'paper_recommend': '论文推荐',
+                        'paper_compare': '论文对比',
+                        'author_papers': '作者论文',
+                        'summary': '研究总结',
+                        'research_gap': '研究空白',
+                        'future_direction': '未来方向',
+                        'general': '通用问答'
+                    };
+                    const label = typeLabels[result.question_type] || result.question_type;
+                    answerHtml = `<span class="badge" style="margin-bottom: 0.5rem;">${label}</span>` + answerHtml;
+                }
+                
+                // Add assistant message
+                chatContainer.innerHTML += `
+                    <div class="chat-message assistant">
+                        <div class="chat-label">🤖 AI助手 ${result.enhanced ? '(增强版)' : ''}</div>
+                        <div class="chat-content">${answerHtml}</div>
+                    </div>
+                `;
+                
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                qaCount++;
+                const statQa = document.getElementById('stat-qa');
+                if (statQa) statQa.textContent = qaCount;
+                
+            } catch (error) {
+                console.error('QA error:', error);
+                document.getElementById(loadingId)?.remove();
+                
+                chatContainer.innerHTML += `
+                    <div class="chat-message assistant">
+                        <div class="chat-label">🤖 AI助手</div>
+                        <div class="chat-content">抱歉，问答系统暂时不可用。请确保API服务器正在运行。</div>
+                    </div>
+                `;
+                
+                toast.error('问答系统连接失败');
+            }
+        }
+
+        function quickQuestion(q) {
+            document.getElementById('qa-input').value = q;
+            askQuestion();
+        }
+        
+        async function clearQAHistory() {
+            try {
+                await fetch(`${API_BASE}/api/qa/clear`, {method: 'POST'});
+                document.getElementById('chat-container').innerHTML = `
+                    <div class="chat-message assistant">
+                        <div class="chat-label">🤖 AI助手</div>
+                        <div class="chat-content">对话历史已清空。请问有什么可以帮助您的？</div>
+                    </div>
+                `;
+                toast.success('对话历史已清空');
+            } catch (error) {
+                console.error('Clear history error:', error);
+            }
+        }
+
+        // ========================================
+        // Feishu Functions
+        // ========================================
+        async function createFeishuBitable() {
+            if (!currentPapers.length) {
+                toast.warning('请先运行论文研究');
+                return;
+            }
+            
+            const name = document.getElementById('feishu-bitable-name').value || 'AI论文研究';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/feishu/bitable`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        name: name,
+                        papers: currentPapers
+                    })
+                });
+                
+                const result = await response.json();
+                loading.stop(event?.target);
+                
+                if (result.success) {
+                    toast.success(`多维表格创建成功！记录数: ${result.records_count}`);
+                    addFeishuHistory('多维表格', result);
+                } else {
+                    toast.error(`创建失败: ${result.error}`);
+                }
+            } catch (error) {
+                console.error('Feishu error:', error);
+                toast.error('请求失败，请确保API服务器正在运行');
+            }
+        }
+
+        async function archiveToFeishuWiki() {
+            if (!currentPapers.length) {
+                toast.warning('请先运行论文研究');
+                return;
+            }
+            
+            // 获取研究总结
+            const summaryElement = document.querySelector('#research-results .summary-content, .research-summary');
+            const review = {
+                summary: summaryElement ? summaryElement.textContent.slice(0, 500) : `共找到 ${currentPapers.length} 篇相关论文`
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/feishu/wiki`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        topic: currentTopic,
+                        review: review,
+                        papers: currentPapers
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    toast.success('知识库归档成功！');
+                    addFeishuHistory('知识库', result);
+                } else {
+                    toast.error(`归档失败: ${result.error}`);
+                }
+            } catch (error) {
+                console.error('Feishu error:', error);
+                toast.error('请求失败，请确保API服务器正在运行');
+            }
+        }
+
+        async function sendFeishuCard() {
+            // 如果没有论文数据，使用默认测试数据
+            const topic = currentTopic || 'AI论文预研助手测试';
+            const papersCount = currentPapers.length || 0;
+            
+            try {
+                loading.start(event?.target, '发送中...');
+                
+                const response = await fetch(`${API_BASE}/api/feishu/push`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        topic: topic,
+                        papers_count: papersCount
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    toast.success('✅ 消息卡片已发送到飞书！');
+                    addFeishuHistory('消息卡片', result);
+                    
+                    // 显示提示
+                    if (papersCount === 0) {
+                        toast.info('💡 已发送测试消息。运行论文研究后可发送完整报告。', 5000);
+                    }
+                } else {
+                    toast.error(`发送失败: ${result.error}`);
+                }
+            } catch (error) {
+                loading.stop(event?.target);
+                console.error('Feishu error:', error);
+                toast.error('请求失败，请确保API服务器正在运行');
+            }
+        }
+
+        function addFeishuHistory(type, result) {
+            const history = document.getElementById('feishu-history');
+            const time = new Date().toLocaleString('zh-CN');
+            
+            // Remove empty state if exists
+            const emptyState = history.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
+            
+            // 生成链接
+            let linkHtml = '';
+            if (result.url) {
+                linkHtml = `<br><a href="${result.url}" target="_blank" style="color: var(--primary-color);">🔗 点击打开</a>`;
+            } else if (result.doc_url) {
+                linkHtml = `<br><a href="${result.doc_url}" target="_blank" style="color: var(--primary-color);">🔗 点击打开</a>`;
+            } else if (result.message_id) {
+                linkHtml = `<br><span style="color: var(--success-color);">📨 消息已发送</span>`;
+            }
+            
+            const item = document.createElement('article');
+            item.className = 'paper-item';
+            item.setAttribute('role', 'listitem');
+            item.innerHTML = `
+                <h4 class="paper-title">📄 ${type}</h4>
+                <div class="paper-meta">
+                    <span aria-label="创建时间">📅 ${time}</span>
+                    <span style="color: var(--success-color);" aria-label="状态">✅ 成功</span>
+                    ${linkHtml}
+                </div>
+            `;
+            
+            history.insertBefore(item, history.firstChild);
+        }
+
+        // ========================================
+        // Report Generation Functions
+        // ========================================
+        async function generateReport(format) {
+            if (!currentPapers.length) {
+                toast.warning('请先运行论文研究');
+                return;
+            }
+            
+            toast.info(`正在生成${format === 'latex' ? 'LaTeX' : 'Markdown'}报告...`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/report/generate`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        topic: currentTopic,
+                        papers: currentPapers,
+                        format: format
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    toast.success(`报告生成成功！`);
+                    
+                    // Show download link
+                    const reportsSection = document.querySelector('#reports-section .paper-list');
+                    if (reportsSection) {
+                        const item = document.createElement('article');
+                        item.className = 'paper-item';
+                        const time = new Date().toLocaleString('zh-CN');
+                        item.innerHTML = `
+                            <h4 class="paper-title">📊 ${format === 'latex' ? 'LaTeX' : 'Markdown'}报告</h4>
+                            <div class="paper-meta">
+                                <span>📅 ${time}</span>
+                                <span>📄 ${result.papers_count} 篇论文</span>
+                            </div>
+                            <div class="paper-actions">
+                                <a href="/${result.filepath}" target="_blank" class="btn btn-primary btn-sm">查看报告</a>
+                            </div>
+                        `;
+                        reportsSection.insertBefore(item, reportsSection.firstChild);
+                    }
+                } else {
+                    toast.error(`生成失败: ${result.error}`);
+                }
+            } catch (error) {
+                console.error('Report error:', error);
+                toast.error('请求失败，请确保API服务器正在运行');
+            }
+        }
+        
+        async function listReports() {
+            try {
+                const response = await fetch(`${API_BASE}/api/report/list`);
+                const result = await response.json();
+                
+                const container = document.getElementById('reports-list');
+                if (!container) return;
+                
+                if (result.reports && result.reports.length > 0) {
+                    container.innerHTML = result.reports.map(report => `
+                        <article class="paper-item">
+                            <h4 class="paper-title">📄 ${report.filename}</h4>
+                            <div class="paper-meta">
+                                <span>📅 ${new Date(report.modified).toLocaleString('zh-CN')}</span>
+                                <span>📦 ${(report.size / 1024).toFixed(1)} KB</span>
+                            </div>
+                            <div class="paper-actions">
+                                <a href="/${report.path}" target="_blank" class="btn btn-primary btn-sm">查看</a>
+                            </div>
+                        </article>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<p class="empty-state">暂无报告</p>';
+                }
+            } catch (error) {
+                console.error('List reports error:', error);
+            }
+        }
+
+        // ========================================
+        // Data Persistence Functions
+        // ========================================
+        async function saveData() {
+            if (!currentPapers.length) {
+                toast.warning('请先运行论文研究');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/data/save`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        topic: currentTopic,
+                        papers: currentPapers,
+                        metadata: {
+                            saved_at: new Date().toISOString()
+                        }
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    toast.success(`数据已保存！共 ${result.papers_count} 篇论文`);
+                } else {
+                    toast.error(`保存失败: ${result.error}`);
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                toast.error('保存失败');
+            }
+        }
+        
+        async function loadData(latest = true) {
+            try {
+                const url = `${API_BASE}/api/data/load?latest=${latest}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.papers) {
+                    currentPapers = data.papers;
+                    currentTopic = data.topic || currentTopic;
+                    
+                    // Update UI
+                    displayResearchResults({
+                        papers: currentPapers,
+                        papers_count: currentPapers.length,
+                        status: 'completed'
+                    });
+                    
+                    toast.success(`已加载 ${currentPapers.length} 篇论文`);
+                } else {
+                    toast.warning('未找到保存的数据');
+                }
+            } catch (error) {
+                console.error('Load error:', error);
+                toast.error('加载失败');
+            }
+        }
+        
+        async function exportData(format) {
+            if (!currentPapers.length) {
+                toast.warning('请先运行论文研究');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/data/export`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        papers: currentPapers,
+                        format: format
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Download file
+                    window.open(`/${result.filepath}`, '_blank');
+                    toast.success(`${format.toUpperCase()} 导出成功`);
+                } else {
+                    toast.error(`导出失败: ${result.error}`);
+                }
+            } catch (error) {
+                console.error('Export error:', error);
+                toast.error('导出失败');
+            }
+        }
+        
+        async function clearCache() {
+            if (!confirm('确定要清除所有缓存吗？')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/cache/clear`, {method: 'POST'});
+                const result = await response.json();
+                
+                if (result.success) {
+                    toast.success('缓存已清除');
+                }
+            } catch (error) {
+                console.error('Clear cache error:', error);
+                toast.error('清除缓存失败');
+            }
+        }
+        
+        async function listSavedData() {
+            try {
+                const response = await fetch(`${API_BASE}/api/data/list`);
+                const result = await response.json();
+                
+                const container = document.getElementById('saved-data-list');
+                if (!container) return;
+                
+                if (result.files && result.files.length > 0) {
+                    container.innerHTML = result.files.map(file => `
+                        <article class="paper-item" onclick="loadDataByFile('${file.filename}')">
+                            <h4 class="paper-title">📁 ${file.topic}</h4>
+                            <div class="paper-meta">
+                                <span>📅 ${new Date(file.timestamp).toLocaleString('zh-CN')}</span>
+                                <span>📄 ${file.papers_count} 篇论文</span>
+                            </div>
+                        </article>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<p class="empty-state">暂无保存的数据</p>';
+                }
+            } catch (error) {
+                console.error('List data error:', error);
+            }
+        }
+
+        // ========================================
+        // Utility Functions
+        // ========================================
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatMarkdown(text) {
+            // Basic markdown formatting
+            return text
+                .replace(/\n/g, '<br>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/`(.*?)`/g, '<code style="background: rgba(255,255,255,0.1); padding: 0.2rem 0.4rem; border-radius: 4px;">$1</code>');
+        }
+
+        // ========================================
+        // Keyboard Navigation
+        // ========================================
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + 1-5 for tab navigation
+            if ((e.ctrlKey || e.metaKey) && e.key >= '1' && e.key <= '5') {
+                e.preventDefault();
+                const sections = ['home', 'research', 'visualization', 'qa', 'feishu'];
+                showSection(sections[parseInt(e.key) - 1]);
+                document.querySelectorAll('.nav-tab')[parseInt(e.key) - 1].click();
+            }
+            
+            // Ctrl/Cmd + K for search focus
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                const researchInput = document.getElementById('research-topic');
+                if (researchInput && !document.getElementById('research-section').classList.contains('hidden')) {
+                    researchInput.focus();
+                }
+            }
+        });
+
+        // ========================================
+        // Performance: Lazy Loading
+        // ========================================
+        if ('IntersectionObserver' in window) {
+            const lazyIframes = document.querySelectorAll('iframe[loading="lazy"]');
+            const iframeObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const iframe = entry.target;
+                        iframe.src = iframe.dataset.src || iframe.src;
+                        iframeObserver.unobserve(iframe);
+                    }
+                });
+            });
+            
+            lazyIframes.forEach(iframe => iframeObserver.observe(iframe));
+        }
+
+        // ========================================
+        // Initialize
+        // ========================================
+        console.log('✨ AI论文预研助手 Web UI 已加载');
+        console.log('📚 使用 Ctrl/Cmd + 1-5 快速切换标签页');
+        console.log('🔍 使用 Ctrl/Cmd + K 快速聚焦搜索框');
+        
+        // Show welcome toast
+        setTimeout(() => {
+            toast.success('欢迎使用AI论文预研助手！', 3000);
+        }, 500);
+    </script>
+</body>
+</html>

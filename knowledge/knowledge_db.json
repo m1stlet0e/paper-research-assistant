@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "id": "aa7b61dfffb9",
+      "type": "url",
+      "url": "https://arxiv.org/abs/2026.12345",
+      "title": "大模型在教育领域的应用研究",
+      "content": "本文研究大模型在教育领域的应用...",
+      "tags": [
+        "AI",
+        "教育",
+        "大模型"
+      ],
+      "keywords": [],
+      "created_at": "2026-03-13T23:31:14.187769",
+      "updated_at": "2026-03-13T23:31:14.187771"
+    },
+    {
+      "id": "5faaf977a2e1",
+      "type": "article",
+      "title": "AI Agent最佳实践",
+      "content": "本文总结了AI Agent的最佳实践...",
+      "source": "知乎",
+      "tags": [
+        "AI",
+        "Agent"
+      ],
+      "keywords": [],
+      "created_at": "2026-03-13T23:31:14.188025",
+      "updated_at": "2026-03-13T23:31:14.188026"
+    }
+  ],
+  "metadata": {
+    "total": 2,
+    "created_at": "2026-03-13T23:31:14.187215"
+  }
+}

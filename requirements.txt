@@ -1,0 +1,21 @@
+# AI论文预研助手 - Python依赖
+
+# 核心框架
+flask>=2.3.0
+requests>=2.31.0
+
+# 数据处理
+feedparser>=6.0.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# 科学计算（可选）
+# numpy>=1.24.0
+# pandas>=2.0.0
+
+# PDF处理（可选）
+# PyPDF2>=3.0.0
+# pdfminer.six>=20221105
+
+# 测试
+pytest>=7.4.0
